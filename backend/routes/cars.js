@@ -50,27 +50,46 @@ router.get('/:id', async (req, res) => {
 
 // PUT: Actualizar un carro por ID
 router.put('/:id', async (req, res) => {
-    try {
-      const car = await Car.findByPk(req.params.id);
-      if (!car) {
-        return res.status(404).json({ message: 'Carro no encontrado' });
-      }
-      const { name, model, brand, price, description, stock, image } = req.body;
-      await car.update({
-        name,
-        model,
-        brand,
-        price,
-        description,
-        stock,
-        image
-      });
-      res.json(car);
-    } catch (error) {
-      console.error('Error al actualizar carro:', error);
-      res.status(500).json({ message: 'Error al actualizar carro' });
+  try {
+    const car = await Car.findByPk(req.params.id);
+    if (!car) {
+      return res.status(404).json({ message: 'Carro no encontrado' });
     }
-  });
+    
+    // Valores antiguos del carro
+    const oldValues = {
+      name: car.name,
+      model: car.model,
+      brand: car.brand,
+      price: car.price,
+      description: car.description,
+      stock: car.stock,
+      image: car.image
+    };
+    
+    const { name, model, brand, price, description, stock, image } = req.body;
+    
+    // Actualiza el carro con los nuevos valores
+    await car.update({
+      name,
+      model,
+      brand,
+      price,
+      description,
+      stock,
+      image
+    });
+    
+    res.json({
+      message: 'Carro actualizado correctamente',
+      oldValues,
+      newValues: car
+    });
+  } catch (error) {
+    console.error('Error al actualizar carro:', error);
+    res.status(500).json({ message: 'Error al actualizar carro' });
+  }
+});
 
 // DELETE: Eliminar un carro por ID
 router.delete('/:id', async (req, res) => {

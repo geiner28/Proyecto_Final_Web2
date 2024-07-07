@@ -1,5 +1,3 @@
-// src/services/api.js
-
 import axios from 'axios';
 
 const API_URL = 'http://localhost:4000/api/cars';
@@ -29,11 +27,12 @@ const remove = async (id) => {
   return response.data;
 };
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default {
+const Api = {
   getAll,
   get,
   create,
   update,
   remove
 };
+
+export default Api;

@@ -1,90 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import api from '../services/Api';
+import EditCarForm from './EditcarForm';
 import CarForm from './CarForm';
-import CarItem from './CarItem';
-import EditCarForm from './EditcarForm'; // Importa el formulario de edición
+import api from '../services/Api'; // Asumiendo que Api.js exporta un objeto con funciones getAll, update, remove
+import { useAuth } from '../context/AuthContext'; // Asumiendo que tienes un contexto de autenticación para el logout
+import { useNavigate } from 'react-router-dom';
 
-function Dashboard() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+const Dashboard = () => {
+  const { logout } = useAuth(); // Hook para el logout
+  const browse = useNavigate();
   const [cars, setCars] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showAll, setShowAll] = useState(false);
-  const [editingCar, setEditingCar] = useState(null); // Estado para almacenar el carro que se está editando
+  const [editingCar, setEditingCar] = useState(null);
 
   useEffect(() => {
     fetchCars();
-  }, [showAll, searchTerm]);
+  }, []);
 
   const fetchCars = async () => {
     try {
-      let data = [];
-      if (showAll) {
-        data = await api.getAll();
-      } else if (searchTerm) {
-        data = await api.searchByName(searchTerm);
-      }
-      setCars(data);
+      const response = await api.getAll();
+      setCars(response); // Asumiendo que response es directamente el array de carros
     } catch (error) {
       console.error('Error fetching cars:', error);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await api.remove(id);
-      setCars(cars.filter(car => car.id !== id));
-    } catch (error) {
-      console.error('Error deleting car:', error);
-    }
-  };
-
-  const handleSearch = async () => {
-    setSearchTerm('');
-    setShowAll(false);
-  };
-
-  const handleShowAll = async () => {
-    setSearchTerm('');
-    setShowAll(true);
-  };
-
   const handleEditCar = (car) => {
-    setEditingCar(car); // Establece el carro a editar en el estado
+    setEditingCar(car); // Actualiza editingCar con el objeto completo del carro
   };
 
-  const handleCancelEdit = () => {
-    setEditingCar(null); // Cancela la edición, vuelve a null
-  };
-
-  const handleUpdateCar = async (id, updatedCar) => {
+  const handleUpdateCar = async (id, updatedData) => {
     try {
-      await api.update(id, updatedCar);
-      const updatedCars = cars.map(car => car.id === id ? updatedCar : car);
-      setCars(updatedCars);
-      setEditingCar(null); // Finaliza la edición y vuelve a null
+      await api.update(id, updatedData);
+      // Actualizar la lista de carros después de la actualización
+      fetchCars();
     } catch (error) {
       console.error('Error updating car:', error);
     }
   };
 
+  const handleCancelEdit = () => {
+    setEditingCar(null); // Cancelar la edición limpiando editingCar
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout(); // Función para el logout del contexto de autenticación
+      browse('/login'); // Redireccionar a la página de login después del logout
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   const handleCreateCar = async (newCar) => {
     try {
-      const response = await api.create(newCar);
-      setCars([...cars, response.data]);
+      await api.create(newCar); // Asumiendo que tienes una función create en tu API
+      // Recargar la lista de carros después de la creación
+      fetchCars();
     } catch (error) {
       console.error('Error creating car:', error);
+    }
+  };
+
+  const handleDeleteCar = async (id) => {
+    try {
+      await api.remove(id); // Asumiendo que tienes una función remove en tu API
+      setCars(cars.filter((car) => car.id !== id)); // Filtrar los carros para eliminar el carro con el id especificado
+    } catch (error) {
+      console.error('Error deleting car:', error);
     }
   };
 
@@ -95,44 +77,50 @@ function Dashboard() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
         </div>
         <div className="flex space-x-4">
-          {!showAll && (
-            <>
-              <button onClick={handleShowAll} className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                Mostrar Todos los Carros
-              </button>
-              <button onClick={handleSearch} className="px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">
-                Buscar Carro por Nombre
-              </button>
-            </>
-          )}
-          <button onClick={handleLogout} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">
-            Cerrar Sesión
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            Cerrar sesión
           </button>
         </div>
       </header>
 
+      <ul>
+        {cars.map((car) => (
+          <li key={car.id} className="flex items-center justify-between border-b border-gray-200 py-2">
+            <div>
+              {car.name} - {car.model} - {car.brand}
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleEditCar(car)}
+                className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => handleDeleteCar(car.id)}
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Eliminar
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
       {editingCar ? (
-        <EditCarForm car={editingCar} onCancelEdit={handleCancelEdit} onUpdateCar={handleUpdateCar} />
+        <EditCarForm
+          car={editingCar}
+          onCancelEdit={handleCancelEdit}
+          onUpdateCar={handleUpdateCar}
+        />
       ) : (
-        <>
-          {showAll ? (
-            <div className="max-w-4xl mx-auto mt-8">
-              <h2 className="text-2xl font-bold mb-4">Lista de Carros</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cars.map(car => (
-                  <CarItem key={car.id} car={car} onDelete={handleDelete} onEdit={handleEditCar} />
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-4xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
-              <CarForm onCreate={handleCreateCar} />
-            </div>
-          )}
-        </>
+        <CarForm onCreateCar={handleCreateCar} />
       )}
     </div>
   );
-}
+};
 
 export default Dashboard;

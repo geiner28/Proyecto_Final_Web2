@@ -1,83 +1,79 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/Api';
 
-const EditCarForm = ({ onUpdate }) => {
-  const { id } = useParams();
+const EditCarForm = ({ car, onCancelEdit, onUpdateCar }) => {
   const navigate = useNavigate();
-  const [car, setCar] = useState({
-    name: '',
-    model: '',
-    brand: ''
-    // Agrega aquí todas las propiedades que tenga tu carro
-  });
+  const [formData, setFormData] = useState({}); // Inicializar formData como objeto vacío
 
   useEffect(() => {
-    const fetchCar = async () => {
-      try {
-        const response = await api.getById(id);
-        setCar(response.data); // Asumiendo que la API devuelve un objeto con datos de carro
-      } catch (error) {
-        console.error('Error fetching car:', error);
-      }
-    };
-
-    fetchCar();
-  }, [id]);
+    // Actualizar formData con los datos del carro cuando cambie
+    setFormData({
+      name: car.name || '',
+      model: car.model || '',
+      brand: car.brand || '',
+      price: car.price || '',
+      description: car.description || '',
+      stock: car.stock || '',
+      image: car.image || ''
+    });
+  }, [car]); // Dependencia de efecto: car, para actualizar cuando cambie
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCar(prevCar => ({ ...prevCar, [name]: value }));
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await api.update(id, car);
-      onUpdate(id, car); // Llama a la función para actualizar el carro en Dashboard
+      await api.update(car.id, formData); // Llamar a la función de actualización con el id del carro
+      onUpdateCar(car.id, formData); // Actualizar el carro en el Dashboard
       alert('Carro actualizado exitosamente');
-      navigate('/dashboard');
+      onCancelEdit(); // Cancelar la edición
     } catch (error) {
       console.error('Error updating car:', error);
+      alert('Hubo un error al actualizar el carro');
     }
   };
 
-  if (!car.name) {
-    return <p>Cargando...</p>;
-  }
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Editar Carro</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Nombre:</label>
-          <input type="text" name="name" value={car.name} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Modelo:</label>
-          <input type="text" name="model" value={car.model} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Marca:</label>
-          <input type="text" name="brand" value={car.brand} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Precio:</label>
-          <input type="text" name="price" value={car.price} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Descripción:</label>
-          <textarea name="description" value={car.description} onChange={handleChange} rows="3" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Stock:</label>
-          <input type="text" name="stock" value={car.stock} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Imagen (URL):</label>
-          <input type="text" name="image" value={car.image} onChange={handleChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-        </div>
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Guardar Cambios</button>
+        {/* Renderizar inputs para cada campo en formData */}
+        {Object.keys(formData).map((key) => (
+          <div className="mb-4" key={key}>
+            <label className="block text-sm font-medium text-gray-700">
+              {key.charAt(0).toUpperCase() + key.slice(1)}:
+            </label>
+            <input
+              type="text"
+              name={key}
+              value={formData[key]}
+              onChange={handleChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+        ))}
+        {/* Botones para guardar cambios y cancelar */}
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          Guardar Cambios
+        </button>
+        <button
+          type="button"
+          className="bg-red-500 text-white px-4 py-2 rounded ml-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+          onClick={onCancelEdit}
+        >
+          Cancelar
+        </button>
       </form>
     </div>
   );
