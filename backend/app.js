@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const passport = require('passport');
 const authRoutes = require('./routes/auth'); // Importa las rutas de autenticación
 const carRoutes = require('./routes/cars'); // Importa las rutas de los carros
+const orderRoutes = require('./routes/orders'); // Importa las rutas de los pedidos
 const cors = require('cors');
 const db = require('./models'); // Importa la configuración de Sequelize y la conexión a la base de datos
 
@@ -26,6 +27,9 @@ app.use(passport.initialize());
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
+
+// Rutas de pedidos
+app.use('/api/orders', orderRoutes);
 
 // Rutas de carros
 app.use('/api/cars', carRoutes);

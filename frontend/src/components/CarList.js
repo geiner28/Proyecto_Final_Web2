@@ -1,32 +1,38 @@
-// src/components/CarList.js
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../services/Api';
-import CarItem from './CarItem';
+// components/CarList.js
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useCart } from './carContext';
 
 const CarList = () => {
   const [cars, setCars] = useState([]);
+  const { addToCart } = useCart();
 
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await api.getAll();
-      setCars(data);
-    };
-    fetchData();
+    axios.get('/api/cars')
+      .then(response => setCars(response.data))
+      .catch(error => console.error(error));
   }, []);
 
-  const handleDelete = async (id) => {
-    await api.remove(id);
-    setCars(cars.filter(car => car.id !== id));
-  };
-
   return (
-    <div>
-      <h2>Listado de Carros</h2>
-      <Link to="/add" className="btn btn-primary mb-3">Agregar Carro</Link>
-      <div className="row">
+    <div className="container mx-auto mt-8">
+      <h1 className="text-2xl font-bold mb-4">Cars</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cars.map(car => (
-          <CarItem key={car.id} car={car} onDelete={handleDelete} />
+          <div key={car.id} className="bg-white p-4 rounded-lg shadow-md flex flex-col">
+            <img src={car.image} alt={car.name} className="mb-4" />
+            <div className="flex-grow">
+              <h2 className="text-xl font-semibold">{car.name}</h2>
+              <p className="mb-2">{car.description}</p>
+              <p className="text-gray-600">Price: ${car.price}</p>
+              <p className="text-gray-600">Stock: {car.stock}</p>
+            </div>
+            <button
+              onClick={() => addToCart(car)}
+              className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
+            >
+              Add to Cart
+            </button>
+          </div>
         ))}
       </div>
     </div>
