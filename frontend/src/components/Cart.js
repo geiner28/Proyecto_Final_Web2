@@ -13,6 +13,7 @@ const Cart = () => {
     address: ''
   });
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderDetails, setOrderDetails] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,19 +24,27 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
+    const total = getTotal();
     const orderData = {
       ...clientData,
       cars: cart.map(car => ({
         id: car.id,
-        quantity: car.quantity
-      }))
+        quantity: car.quantity,
+        price: car.price // Incluye el precio de cada carro
+      })),
+      total // Incluye el total en los datos de la orden
     };
 
     try {
       const response = await axios.post('/api/orders', orderData);
       console.log('Order created:', response.data);
-      clearCart(); // Clear the cart after successful order creation
-      setOrderPlaced(true); // Set state to show order confirmation
+      setOrderDetails({
+        clientData,
+        cars: [...cart],
+        total
+      }); // Guarda los detalles del pedido antes de limpiar el carrito
+      clearCart(); // Limpia el carrito después de crear el pedido con éxito
+      setOrderPlaced(true); // Cambia el estado para mostrar la confirmación del pedido
     } catch (error) {
       console.error('Error creating order:', error);
       if (error.response) {
@@ -46,8 +55,8 @@ const Cart = () => {
   };
 
   const handleReturnHome = () => {
-    setOrderPlaced(false); // Reset order confirmation state
-    window.location.href = '/'; // Redirect to home page
+    setOrderPlaced(false); // Restablece el estado de confirmación del pedido
+    window.location.href = '/'; // Redirige a la página de inicio
   };
 
   return (
@@ -56,21 +65,21 @@ const Cart = () => {
         <div className="bg-white p-4 rounded-lg shadow-md">
           <h1 className="text-2xl font-bold mb-4">¡Compra Finalizada!</h1>
           <h2 className="text-lg font-semibold">Factura:</h2>
-          <p>Nombre del Cliente: {clientData.clientName}</p>
-          <p>Identificación: {clientData.clientID}</p>
-          <p>Teléfono: {clientData.phone}</p>
-          <p>Correo Electrónico: {clientData.email}</p>
-          <p>Dirección: {clientData.address}</p>
+          <p>Nombre del Cliente: {orderDetails.clientData.clientName}</p>
+          <p>Identificación: {orderDetails.clientData.clientID}</p>
+          <p>Teléfono: {orderDetails.clientData.phone}</p>
+          <p>Correo Electrónico: {orderDetails.clientData.email}</p>
+          <p>Dirección: {orderDetails.clientData.address}</p>
           <p>Productos:</p>
     
           <ul>
-            {cart.map((car, index) => (
+            {orderDetails.cars.map((car, index) => (
               <li key={index}>
                 {car.name} - Cantidad: {car.quantity} - Precio Unitario: ${car.price} - Total: ${car.quantity * car.price}
               </li>
             ))}
           </ul>
-          <p className="font-bold mt-4">Total: ${getTotal()}</p>
+          <p className="font-bold mt-4">Total: ${orderDetails.total}</p>
           <button
             onClick={handleReturnHome}
             className="bg-blue-500 text-white py-2 px-4 rounded mt-4 hover:bg-blue-700"

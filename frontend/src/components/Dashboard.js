@@ -4,6 +4,7 @@ import CarForm from './CarForm';
 import api from '../services/Api'; // Asumiendo que Api.js exporta un objeto con funciones getAll, update, remove
 import { useAuth } from '../context/AuthContext'; // Asumiendo que tienes un contexto de autenticación para el logout
 import { useNavigate } from 'react-router-dom';
+import OrdersList from './OrdersList'; // Importar el componente OrdersList
 
 const Dashboard = () => {
   const { logout } = useAuth(); // Hook para el logout
@@ -15,6 +16,9 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false); // Estado para mostrar el formulario de edición
+
+  // Estado y función para mostrar/ocultar órdenes
+  const [showOrders, setShowOrders] = useState(false);
 
   useEffect(() => {
     fetchCars();
@@ -97,6 +101,10 @@ const Dashboard = () => {
     }
   };
 
+  const toggleShowOrders = () => {
+    setShowOrders(!showOrders); // Alternar el estado de mostrar/ocultar órdenes
+  };
+
   return (
     <div>
       <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
@@ -134,7 +142,16 @@ const Dashboard = () => {
         >
           Agregar
         </button>
+        <button
+          onClick={toggleShowOrders} // Manejar el clic para mostrar/ocultar órdenes
+          className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 ml-2 focus:outline-none focus:ring-2 focus:ring-gray-800"
+        >
+          {showOrders ? 'Ocultar órdenes' : 'Mostrar órdenes'}
+        </button>
       </form>
+
+      {/* Mostrar el componente OrdersList si showOrders es true */}
+      {showOrders && <OrdersList />}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {displayedCars.map((car) => (
@@ -175,7 +192,6 @@ const Dashboard = () => {
                 >
                   Eliminar
                 </button>
-               
               </div>
             </div>
           </div>
@@ -194,31 +210,28 @@ const Dashboard = () => {
           <div className="bg-white p-8 rounded-lg shadow-lg relative w-full max-w-md mx-auto h-auto">
             <button
               onClick={() => setShowCreateForm(false)}
-              className="absolute top-2 right-2 text-gray-700 hover:text-gray-900"
+              className="absolute top-0 right-0 m-4 p-2 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
-              &times;
+              X
             </button>
             <CarForm onCreateCar={handleCreateCar} />
           </div>
         </div>
       )}
 
-      {showEditForm && editingCar && (
+      {showEditForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-lg shadow-lg relative w-full max-w-md mx-auto h-auto">
             <button
-              onClick={() => {
-                setShowEditForm(false);
-                setEditingCar(null);
-              }}
-              className="absolute top-2 right-2 text-gray-700 hover:text-gray-900"
+              onClick={handleCancelEdit}
+              className="absolute top-0 right-0 m-4 p-2 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
-              &times;
+              X
             </button>
             <EditCarForm
               car={editingCar}
-              onCancelEdit={handleCancelEdit}
               onUpdateCar={handleUpdateCar}
+              onCancelEdit={handleCancelEdit}
             />
           </div>
         </div>
